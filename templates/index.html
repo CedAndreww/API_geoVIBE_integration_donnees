@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Geovibe 🗺️</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <h1>🗺️ Geovibe</h1>
+
+      <div id="search-wrap">
+        <div id="search-bar">
+          <input type="text" id="search-input" placeholder="Ville ou lieu..." autocomplete="off">
+          <button id="search-btn">🔍</button>
+        </div>
+        <div id="suggest-box" class="hidden"></div>
+      </div>
+
+      <div id="geo-bar">
+        <button id="locate-btn">📍 Près de moi</button>
+        <select id="radius-select">
+          <option value="10">10 km</option>
+          <option value="20" selected>20 km</option>
+          <option value="50">50 km</option>
+        </select>
+      </div>
+
+      <!-- Boutons toggle -->
+      <div id="header-toggles">
+        <button id="filter-toggle">⚙️ Conditions <span id="filter-badge" class="hidden">●</span></button>
+        <button id="theme-toggle">🏷️ Thèmes <span id="theme-badge" class="hidden">●</span></button>
+      </div>
+    </div>
+
+    <!-- Panel filtres conditions -->
+    <div id="filter-panel" class="hidden">
+      <div class="filter-section">
+        <label class="filter-label">🌡️ Température (°C)</label>
+        <div class="range-row">
+          <span id="temp-min-val">0°C</span>
+          <div class="range-wrap">
+            <input type="range" id="temp-min" min="-10" max="40" value="0" step="1">
+            <input type="range" id="temp-max" min="-10" max="40" value="35" step="1">
+          </div>
+          <span id="temp-max-val">35°C</span>
+        </div>
+      </div>
+      <div class="filter-section">
+        <label class="filter-label">💨 Vent max (km/h)</label>
+        <div class="range-row">
+          <input type="range" id="wind-max" min="0" max="100" value="60" step="5" style="flex:1">
+          <span id="wind-max-val">60 km/h</span>
+        </div>
+      </div>
+      <div class="filter-section">
+        <label class="filter-label">🌧️❄️ Précipitations souhaitées</label>
+        <div class="toggles-row">
+          <button class="toggle-btn active" data-filter="precip" data-val="any">Peu importe</button>
+          <button class="toggle-btn" data-filter="precip" data-val="none">☀️ Aucune</button>
+          <button class="toggle-btn" data-filter="precip" data-val="rain">🌧️ Pluie OK</button>
+          <button class="toggle-btn" data-filter="precip" data-val="snow">❄️ Neige</button>
+        </div>
+      </div>
+      <div class="filter-section">
+        <label class="filter-label">🌿 Qualité de l'air min.</label>
+        <div class="toggles-row">
+          <button class="toggle-btn active" data-filter="air" data-val="any">Peu importe</button>
+          <button class="toggle-btn" data-filter="air" data-val="bon">🟢 Bon</button>
+          <button class="toggle-btn" data-filter="air" data-val="acceptable">Acceptable</button>
+          <button class="toggle-btn" data-filter="air" data-val="modere">🟡 Modéré</button>
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button id="filter-apply">✅ Appliquer</button>
+        <button id="filter-reset">↺ Réinitialiser</button>
+      </div>
+    </div>
+
+    <!-- Panel thèmes -->
+    <div id="theme-panel" class="hidden">
+      <div class="theme-panel-header">
+        <span class="filter-label" style="margin:0">Sélectionner une ou plusieurs thématiques</span>
+        <button id="theme-clear">Tout effacer</button>
+      </div>
+      <div id="theme-chips">
+        <button class="theme-chip" data-theme="Patrimoine Historique">🏰 Patrimoine Historique</button>
+        <button class="theme-chip" data-theme="Culture & Musées">🎨 Culture & Musées</button>
+        <button class="theme-chip" data-theme="Nature & Parcs">🌿 Nature & Parcs</button>
+        <button class="theme-chip" data-theme="Sport & Aventure">🏃 Sport & Aventure</button>
+        <button class="theme-chip" data-theme="Gastronomie & Terroir">🍽️ Gastronomie & Terroir</button>
+        <button class="theme-chip" data-theme="Loisirs Familiaux">👨‍👩‍👧 Loisirs Familiaux</button>
+        <button class="theme-chip" data-theme="Détente & Bien-être">🧘 Détente & Bien-être</button>
+        <button class="theme-chip" data-theme="Spectacles & Événements">🎭 Spectacles & Événements</button>
+        <button class="theme-chip" data-theme="Activités Aquatiques">🏊 Activités Aquatiques</button>
+        <button class="theme-chip" data-theme="Shopping & Artisanat">🛍️ Shopping & Artisanat</button>
+        <button class="theme-chip" data-theme="Vie Nocturne">🌙 Vie Nocturne</button>
+        <button class="theme-chip" data-theme="Édifices Religieux">⛪ Édifices Religieux</button>
+        <button class="theme-chip" data-theme="Science & Industrie">🔬 Science & Industrie</button>
+        <button class="theme-chip" data-theme="Oenotourisme">🍷 Oenotourisme</button>
+        <button class="theme-chip" data-theme="Circuits & Balades">🥾 Circuits & Balades</button>
+        <button class="theme-chip" data-theme="Autre">📍 Autre</button>
+      </div>
+      <button id="theme-apply">✅ Appliquer</button>
+    </div>
+
+    <div id="poi-list">
+      <p id="poi-placeholder">Clique sur la carte ou cherche une ville</p>
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <div id="detail-panel" class="hidden">
+    <button id="close-detail">✕</button>
+    <div id="detail-content"></div>
+  </div>
+
+  <div id="air-help-popup" class="hidden">
+    <button id="air-help-close">✕</button>
+    <h4>🌿 Qualité de l'air — guide</h4>
+    <table class="air-help-table">
+      <tr><td>🟢</td><td><b>Bon (0–20)</b></td><td>Aucun risque — idéal pour toutes activités</td></tr>
+      <tr><td>🟢</td><td><b>Acceptable (21–40)</b></td><td>Risque très faible pour la plupart</td></tr>
+      <tr><td>🟡</td><td><b>Modéré (41–60)</b></td><td>Personnes sensibles peuvent ressentir des effets</td></tr>
+      <tr><td>🟠</td><td><b>Mauvais (61–80)</b></td><td>Effets possibles pour tout le monde</td></tr>
+      <tr><td>🔴</td><td><b>Très mauvais (81–100)</b></td><td>Éviter les activités extérieures</td></tr>
+    </table>
+    <div class="air-help-params">
+      <div><b>PM2.5</b> — Particules fines (&lt;2.5µm). Pénètrent les poumons. Seuil OMS : 15 µg/m³/j</div>
+      <div><b>PM10</b> — Particules grossières (&lt;10µm). Irritations. Seuil OMS : 45 µg/m³/j</div>
+      <div><b>NO₂</b> — Dioxyde d'azote. Circulation. Seuil OMS : 25 µg/m³/j</div>
+      <div><b>O₃</b> — Ozone. Réaction solaire. Seuil OMS : 100 µg/m³/8h</div>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
